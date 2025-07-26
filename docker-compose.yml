@@ -1,0 +1,68 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: rabbitmq1
+    hostname: rabbitmq1
+    ports:
+      - "5672:5672"  # AMQP порт
+      - "15672:15672"  # Web-интерфейс
+    environment:
+      - RABBITMQ_ERLANG_COOKIE=SECRETCOOKIE
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=secretpassword
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./scripts:/scripts
+      # - ./hosts:/etc/hosts
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    command: >
+      sh -c "apt-get update && 
+      apt-get install -y python3-pip && 
+      pip install pika && 
+      docker-entrypoint.sh rabbitmq-server"
+    networks:
+      rabbitmq_net:
+        aliases:
+          - rmq01
+  rabbitmq1:
+    image: rabbitmq:3.12-management
+    container_name: rabbitmq2
+    hostname: rabbitmq2
+    ports:
+      - "15673:15672"  # Web-интерфейс
+    environment:
+      - RABBITMQ_ERLANG_COOKIE=SECRETCOOKIE
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=secretpassword
+    volumes:
+      - rabbitmq_data1:/var/lib/rabbitmq
+      - ./scripts:/scripts
+      # - ./hosts:/etc/hosts
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    command: >
+      sh -c "apt-get update && 
+      apt-get install -y python3-pip && 
+      pip install pika && 
+      docker-entrypoint.sh rabbitmq-server"
+    networks:
+      rabbitmq_net:
+        aliases:
+          - rmq02
+
+volumes:
+  rabbitmq_data:
+  rabbitmq_data1:
+
+networks:
+  rabbitmq_net:
+    driver: bridge
